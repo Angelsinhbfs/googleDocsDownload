@@ -10,7 +10,9 @@ using Google.Apis.Download;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
-using iText.Kernel.Pdf;
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
+//using iText.Kernel.Pdf;
 using File = Google.Apis.Drive.v3.Data.File;
 
 namespace DriveManip
@@ -50,20 +52,28 @@ namespace DriveManip
 
         public List<File> FetchFiles()
         {
-            // Define parameters of request.
-            FilesResource.ListRequest listRequest = service.Files.List();
-            listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet'";
-            listRequest.PageSize = 1000;
-            listRequest.Fields = "nextPageToken, files(id, name, mimeType)";
+            List<File> output = new List<File>();
+            string pageToken = null;
+            do
+            {
+                // Define parameters of request.
+                FilesResource.ListRequest listRequest = service.Files.List();
+                listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet'";
+                listRequest.PageSize = 1000;
+                listRequest.Fields = "nextPageToken, files(id, name, mimeType)";
+                var result = listRequest.Execute();
+                output.AddRange(result.Files);
+                pageToken = result.NextPageToken;
+            } while (pageToken != null);
 
             // List files.
-            return listRequest.Execute().Files.ToList();
+            return output;
 
         }
 
-        public List<PdfDocument> GetPdfDocuments(List<File> Files)
+        public PdfDocument GetPdfDocuments(List<File> Files)
         {
-            List<PdfDocument> RetVal = new List<PdfDocument>();
+            var outputDoc = new PdfDocument();
             foreach (var file in Files)
             {
                 FilesResource.ExportRequest request = service.Files.Export(file.Id, "application/pdf");
@@ -84,8 +94,10 @@ namespace DriveManip
                             case DownloadStatus.Completed:
                             {
                                 Console.WriteLine("Download complete.");
-                                var n = new PdfDocument(new PdfReader(stream));
-                                RetVal.Add(n);
+                                var n = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
+                                var page1 = n.Pages[0];
+                                outputDoc.AddPage(page1);
+                                //var n = new PdfDocument(new PdfReader(stream));
                                 break;
                             }
                             case DownloadStatus.Failed:
@@ -95,10 +107,9 @@ namespace DriveManip
                             }
                         }
                     };
-                request.Download(stream);
+                request.DownloadWithStatus(stream);
             }
-
-            return RetVal;
+            return outputDoc;
         }
     }
 }

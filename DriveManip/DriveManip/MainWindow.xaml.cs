@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,7 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
+//using System.Windows.Shapes;
 using DriveManip.Annotations;
 
 namespace DriveManip
@@ -36,14 +38,27 @@ namespace DriveManip
             Fetch.Click += FetchOnClick;
             sAll.Click += SAllOnClick;
             PrintSel.Click += PrintSelOnClick;
-
+            OpenOutput.Click += OpenOutputOnClick;
+            Status.Content = "Not Connected";
             DisplayList.ItemsSource = Characters;
+        }
+
+        private void OpenOutputOnClick(object sender, RoutedEventArgs e)
+        {
+            Directory.CreateDirectory("Output");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Process.Start("explorer", path);
         }
 
         private void PrintSelOnClick(object sender, RoutedEventArgs e)
         {
+            Status.Content = "Collecting for print...";
             var pdfs = GHandler.GetPdfDocuments(Characters.Where(c => c.IsChecked).Select(c => c.Item.MetaFile).ToList());
-            Console.WriteLine("test");
+            Directory.CreateDirectory("Output");
+            pdfs.Save("Output/ExportedSheets.pdf");
+            pdfs.Close();
+            Status.Content = "Output at ExportedSheets.pdf";
+            Characters.Clear();
         }
 
         private void SAllOnClick(object sender, RoutedEventArgs e)
@@ -56,6 +71,7 @@ namespace DriveManip
 
         private void FetchOnClick(object sender, RoutedEventArgs e)
         {
+            Status.Content = "Connecting...";
             Characters.Clear();
             var files = GHandler.FetchFiles();
             foreach (var file in files)
@@ -70,6 +86,13 @@ namespace DriveManip
                 });
             }
 
+            Status.Content = " Fetched";
+        }
+
+        private void Scroll_List(object sender, MouseWheelEventArgs e)
+        {
+            ScrollView.ScrollToVerticalOffset(ScrollView.VerticalOffset - e.Delta * 0.5);
+            e.Handled = true;
         }
     }
 }
