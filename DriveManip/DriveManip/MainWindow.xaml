@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DriveManip"
         mc:Ignorable="d"
-        Title="Docs Printer" Height="350" Width="525"
+        Title="Docs Printer" Height="576" Width="525"
         DataContext="Characters"
         MouseWheel="Scroll_List">
-    <Grid MouseWheel="Scroll_List">
+    <Grid MouseWheel="Scroll_List" Margin="0,0,0,38">
         <ScrollViewer x:Name="ScrollView" Width="500" 
                       HorizontalScrollBarVisibility="Auto" 
                       VerticalScrollBarVisibility="Auto" Margin="8,24,9,0" MouseWheel="Scroll_List">
@@ -29,10 +29,11 @@
                 </ListBox.ItemTemplate>
             </ListBox>
         </ScrollViewer>
-        <Button x:Name="Fetch" Content="Fetch" HorizontalAlignment="Left" Margin="10,4,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button x:Name="PrintSel" Content="Print Selected" HorizontalAlignment="Left" Margin="414,4,0,0" VerticalAlignment="Top" Width="93"/>
-        <Button x:Name="sAll" Content="Select All" HorizontalAlignment="Left" Margin="90,4,0,0" VerticalAlignment="Top" Width="75"/>
-        <Label x:Name="Status" Content="Label" HorizontalAlignment="Left" Margin="170,0,0,0" VerticalAlignment="Top" Width="162"/>
-        <Button x:Name="OpenOutput" Content="OpenFolder" HorizontalAlignment="Left" Margin="337,4,0,0" VerticalAlignment="Top" Width="72"/>
+        <Button x:Name="Fetch" Content="Fetch" HorizontalAlignment="Left" Margin="10,4,0,0" VerticalAlignment="Top" Width="119"/>
+        <Button x:Name="PrintSel" Content="Print Selected" HorizontalAlignment="Left" Margin="414,4,0,0" VerticalAlignment="Top" Width="93" IsEnabled="False"/>
+        <Button x:Name="sAll" Content="Select All" HorizontalAlignment="Left" Margin="8,286,0,-25" VerticalAlignment="Bottom" Width="75"/>
+        <Label x:Name="Status" Content="Label" HorizontalAlignment="Left" Margin="147,281,0,-26" VerticalAlignment="Bottom" Width="162"/>
+        <Button x:Name="OpenOutput" Content="OpenFolder" HorizontalAlignment="Left" Margin="337,4,0,0" VerticalAlignment="Top" Width="72" IsEnabled="False"/>
+        <ProgressBar x:Name="pBar" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="497" Margin="10,170,0,0" IsIndeterminate="True" Visibility="Hidden"/>
     </Grid>
 </Window>

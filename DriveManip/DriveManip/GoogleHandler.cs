@@ -17,6 +17,12 @@ using File = Google.Apis.Drive.v3.Data.File;
 
 namespace DriveManip
 {
+    public struct DocWName
+    {
+        public string Name;
+        public byte[] Doc;
+    }
+
     public class GoogleHandler
     {
         // If modifying these scopes, delete your previously saved credentials
@@ -25,11 +31,12 @@ namespace DriveManip
         static string ApplicationName = "Drive API .NET Quickstart";
         UserCredential credential;
         private DriveService service;
+        private List<DocWName> Docs;
 
 
         public GoogleHandler()
         {
-
+            Docs = new List<DocWName>();
             using (var stream =
                 new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
@@ -50,7 +57,7 @@ namespace DriveManip
             });
         }
 
-        public List<File> FetchFiles()
+        public async Task<List<File>> FetchFolders()
         {
             List<File> output = new List<File>();
             string pageToken = null;
@@ -58,13 +65,36 @@ namespace DriveManip
             {
                 // Define parameters of request.
                 FilesResource.ListRequest listRequest = service.Files.List();
-                listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet' and '166kDZXPrv_FyHpYe8DVb8wfSkAw0Tbdb' in parents";
+                listRequest.Q = "mimeType = 'application/vnd.google-apps.folder' and 'me' in owners and trashed = false";
                 listRequest.PageSize = 1000;
-                listRequest.Fields = "nextPageToken, files(id, name, mimeType)";
-                var result = listRequest.Execute();
+                listRequest.Fields = "nextPageToken, files(id, name, mimeType, ownedByMe)";
+                var result = await listRequest.ExecuteAsync();
                 output.AddRange(result.Files);
                 pageToken = result.NextPageToken;
             } while (pageToken != null);
+
+            // List files.
+            return output;
+        }
+
+        public async Task<List<File>> FetchFiles(List<string> parents)
+        {
+            List<File> output = new List<File>();
+            string pageToken = null;
+            foreach (var parent in parents)
+            {
+                do
+                {
+                    // Define parameters of request.
+                    FilesResource.ListRequest listRequest = service.Files.List();
+                    listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet' and '" + parent + "' in parents";
+                    listRequest.PageSize = 1000;
+                    listRequest.Fields = "nextPageToken, files(id, name, mimeType)";
+                    var result = await listRequest.ExecuteAsync();
+                    output.AddRange(result.Files);
+                    pageToken = result.NextPageToken;
+                } while (pageToken != null); 
+            }
 
             // List files.
             return output;
@@ -96,7 +126,19 @@ namespace DriveManip
                                 Console.WriteLine("Download complete.");
                                 var n = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
                                 var page1 = n.Pages[0];
-                                outputDoc.AddPage(page1);
+                                var cropped = new PdfDocument();
+                                cropped.AddPage(page1);
+                                    using (var ms = new MemoryStream())
+                                    {
+                                        cropped.Save(ms);
+                                        cropped.Close();
+                                        Docs.Add(new DocWName
+                                        {
+                                            Name = file.Name,
+                                            Doc = stream.ToArray()
+                                        }); 
+                                    }
+                                //outputDoc.AddPage(page1);
                                 //var n = new PdfDocument(new PdfReader(stream));
                                 break;
                             }
@@ -109,6 +151,15 @@ namespace DriveManip
                     };
                 request.DownloadWithStatus(stream);
             });
+            Docs = Docs.OrderBy(d=>d.Name).ToList();
+            foreach (var doc in Docs)
+            {
+                using (var ms = new MemoryStream(doc.Doc))
+                {
+                    var d = PdfReader.Open(ms, PdfDocumentOpenMode.Import);
+                    outputDoc.AddPage(d.Pages[0]);
+                }
+            }
             return outputDoc;
         }
     }
