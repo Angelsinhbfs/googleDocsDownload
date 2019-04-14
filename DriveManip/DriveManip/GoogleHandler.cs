@@ -58,7 +58,7 @@ namespace DriveManip
             {
                 // Define parameters of request.
                 FilesResource.ListRequest listRequest = service.Files.List();
-                listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet'";
+                listRequest.Q = "mimeType = 'application/vnd.google-apps.spreadsheet' and '166kDZXPrv_FyHpYe8DVb8wfSkAw0Tbdb' in parents";
                 listRequest.PageSize = 1000;
                 listRequest.Fields = "nextPageToken, files(id, name, mimeType)";
                 var result = listRequest.Execute();
@@ -74,7 +74,7 @@ namespace DriveManip
         public PdfDocument GetPdfDocuments(List<File> Files)
         {
             var outputDoc = new PdfDocument();
-            foreach (var file in Files)
+            var pFor = Parallel.ForEach(Files, file =>
             {
                 FilesResource.ExportRequest request = service.Files.Export(file.Id, "application/pdf");
                 var stream = new System.IO.MemoryStream();
@@ -108,7 +108,7 @@ namespace DriveManip
                         }
                     };
                 request.DownloadWithStatus(stream);
-            }
+            });
             return outputDoc;
         }
     }
